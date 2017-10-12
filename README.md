@@ -20,5 +20,11 @@ It provide protection for 3 kind of crash:
 
 	- NSDictionary/NSMutableDictionary
 
-## Installation
+And also provide a flexible way to observe dealloc function of NSObject class object.
+
+## Installation & Use
 Download the latest tag and drag the `BARTCrashBlocker` folder into your Xcode project.
+
+- use `BARTCrashBlocker.h` to load/unload specific crash blocker
+
+- use `BARTDeallocObserver.h` to start/stop dealloc function observing

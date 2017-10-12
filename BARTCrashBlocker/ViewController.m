@@ -8,6 +8,7 @@
 
 #import "ViewController.h"
 #import "BARTKVOCrashBlocker.h"
+#import "BARTDeallocObserver.h"
 
 @interface TestInnerModel : NSObject
 
@@ -79,7 +80,16 @@
 {
     TestObserver *testObserver = [[TestObserver alloc] init];
     testObserver.image = [UIImage imageNamed:@"testImage"];
+    [testObserver startDeallocObserving:^(){
+        NSLog(@"will  1111111");
+    } didDeallocBlock:nil];
     TestModel *testModel = [[TestModel alloc] init];
+    [testModel startDeallocObserving:^(){
+        NSLog(@"will  2222222");
+    } didDeallocBlock:^(){
+        NSLog(@"did  2222222");
+    }];
+    [testModel stopDeallocObserving];
     testModel.image = [UIImage imageNamed:@"testImage"];
     [testModel addObserver:testObserver forKeyPath:@"innerModel.style" options:NSKeyValueObservingOptionNew context:nil];
     [testModel addObserver:testObserver forKeyPath:@"style" options:NSKeyValueObservingOptionNew context:nil];

@@ -10,6 +10,7 @@
 #import "BARTKVOCrashBlocker.h"
 #import <objc/runtime.h>
 #import <pthread.h>
+#import "BARTAssociateCategory.h"
 #import "BALogger.h"
 
 #define KEY_ASSOCIATED_PROXY "BARTObjectAssociatedProxy"
@@ -89,12 +90,12 @@
 #pragma mark - private method
 - (BARTKVOProxy *)KVOProxy
 {
-    BARTKVOProxy *result = [self getAssociatedAttribute:KEY_ASSOCIATED_PROXY];
+    BARTKVOProxy *result = [NSObject getAssociatedAttribute:KEY_ASSOCIATED_PROXY from:self];
     if (!result) {
         result = [[BARTKVOProxy alloc] init];
         result.target = self;
         result.targetClass = NSStringFromClass([self class]);
-        [self setAssociatedAttribute:result withKey:KEY_ASSOCIATED_PROXY];
+        [NSObject setAssociatedAttribute:result withKey:KEY_ASSOCIATED_PROXY policy:OBJC_ASSOCIATION_RETAIN_NONATOMIC to:self];
     }
     return result;
 }
@@ -161,21 +162,6 @@
     if (!KVORelationRegistered) {
         [[BALogger sharedLogger] log:[NSString stringWithFormat:@"KVO crash, remove unregistered observer, observer class = %@, keyPath = %@, observed target class = %@", [observer class], keyPath, [self class]]];
     }
-}
-
-- (void)setAssociatedAttribute:(id)value withKey:(void *)key
-{
-    objc_setAssociatedObject(self, key, value, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
-}
-
-- (id)getAssociatedAttribute:(void *)key
-{
-    return objc_getAssociatedObject(self, key);
-}
-
-- (void)removeAssociatedAttribute:(void *)key
-{
-    objc_setAssociatedObject(self, key, nil, OBJC_ASSOCIATION_ASSIGN);
 }
 
 @end
