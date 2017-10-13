@@ -24,4 +24,9 @@
 {
 }
 
+- (BOOL)working
+{
+    return NO;
+}
+
 @end

@@ -11,5 +11,6 @@
 + (instancetype)sharedBlocker;
 - (void)load;
 - (void)unload;
+- (BOOL)working;
 
 @end

@@ -268,6 +268,15 @@
     pthread_mutex_unlock(&_mutexLock);
 }
 
+- (BOOL)working
+{
+    BOOL result = NO;
+    pthread_mutex_lock(&_mutexLock);
+    result = _blockerLoaded;
+    pthread_mutex_unlock(&_mutexLock);
+    return result;
+}
+
 #pragma mark - private method
 - (void)replaceMethods
 {

@@ -90,7 +90,12 @@
 #pragma mark - private method
 - (BARTKVOProxy *)KVOProxy
 {
-    BARTKVOProxy *result = [NSObject getAssociatedAttribute:KEY_ASSOCIATED_PROXY from:self];
+    return [NSObject getAssociatedAttribute:KEY_ASSOCIATED_PROXY from:self];
+}
+
+- (BARTKVOProxy *)setKVOProxy
+{
+    BARTKVOProxy *result = [self KVOProxy];
     if (!result) {
         result = [[BARTKVOProxy alloc] init];
         result.target = self;
@@ -114,8 +119,13 @@
 {
     dispatch_semaphore_wait([self KVOCrashBlockerSemaphore], DISPATCH_TIME_FOREVER);
     
+    BOOL KVORelationRegistered = NO;
     BARTKVOProxy *KVOProxy = [self KVOProxy];
-    BOOL KVORelationRegistered = [KVOProxy isKVORelationRegistered:observer keyPath:keyPath];
+    if (KVOProxy) {
+        KVORelationRegistered = [KVOProxy isKVORelationRegistered:observer keyPath:keyPath];
+    } else {
+        KVOProxy = [self setKVOProxy];
+    }
     if (!KVORelationRegistered) {
         [self BARTCB_addObserver:KVOProxy forKeyPath:keyPath options:options context:context];
         [KVOProxy registerKVORelation:observer keyPath:keyPath];
@@ -132,8 +142,11 @@
 {
     dispatch_semaphore_wait([self KVOCrashBlockerSemaphore], DISPATCH_TIME_FOREVER);
     
+    BOOL KVORelationRegistered = NO;
     BARTKVOProxy *KVOProxy = [self KVOProxy];
-    BOOL KVORelationRegistered = [KVOProxy isKVORelationRegistered:observer keyPath:keyPath];
+    if (KVOProxy) {
+        KVORelationRegistered = [KVOProxy isKVORelationRegistered:observer keyPath:keyPath];
+    }
     if (KVORelationRegistered) {
         [self BARTCB_removeObserver:KVOProxy forKeyPath:keyPath context:context];
         [KVOProxy unregisterKVORelation:observer keyPath:keyPath];
@@ -141,7 +154,7 @@
     
     dispatch_semaphore_signal([self KVOCrashBlockerSemaphore]);
     
-    if (!KVORelationRegistered) {
+    if (KVOProxy && !KVORelationRegistered) {
         [[BALogger sharedLogger] log:[NSString stringWithFormat:@"KVO crash, remove unregistered observer, observer class = %@, keyPath = %@, observed target class = %@", [observer class], keyPath, [self class]]];
     }
 }
@@ -150,8 +163,11 @@
 {
     dispatch_semaphore_wait([self KVOCrashBlockerSemaphore], DISPATCH_TIME_FOREVER);
     
+    BOOL KVORelationRegistered = NO;
     BARTKVOProxy *KVOProxy = [self KVOProxy];
-    BOOL KVORelationRegistered = [KVOProxy isKVORelationRegistered:observer keyPath:keyPath];
+    if (KVOProxy) {
+        KVORelationRegistered = [KVOProxy isKVORelationRegistered:observer keyPath:keyPath];
+    }
     if (KVORelationRegistered) {
         [self BARTCB_removeObserver:KVOProxy forKeyPath:keyPath];
         [KVOProxy unregisterKVORelation:observer keyPath:keyPath];
@@ -159,7 +175,7 @@
     
     dispatch_semaphore_signal([self KVOCrashBlockerSemaphore]);
     
-    if (!KVORelationRegistered) {
+    if (KVOProxy && !KVORelationRegistered) {
         [[BALogger sharedLogger] log:[NSString stringWithFormat:@"KVO crash, remove unregistered observer, observer class = %@, keyPath = %@, observed target class = %@", [observer class], keyPath, [self class]]];
     }
 }
@@ -218,6 +234,15 @@
     pthread_mutex_unlock(&_mutexLock);
 }
 
+- (BOOL)working
+{
+    BOOL result = NO;
+    pthread_mutex_lock(&_mutexLock);
+    result = _blockerLoaded;
+    pthread_mutex_unlock(&_mutexLock);
+    return result;
+}
+
 #pragma mark - private method
 - (void)replaceMethods
 {
@@ -235,7 +260,7 @@
 
 - (void)dealloc
 {
-    if (self.KVORelationsDic.count > 0) {
+    if (self.KVORelationsDic.count > 0 && [[BARTKVOCrashBlocker sharedBlocker] working]) {
         [self.KVORelationsDic removeAllObjects];
         [[BALogger sharedLogger] log:[NSString stringWithFormat:@"KVO crash, observered target released, observed target class = %@", self.targetClass]];
     }

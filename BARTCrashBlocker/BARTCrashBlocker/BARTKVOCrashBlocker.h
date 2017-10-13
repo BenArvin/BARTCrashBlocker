@@ -9,7 +9,7 @@
 #import "BARTBasicCrashBlocker.h"
 
 /**
- KVO crash blocker:
+ KVO crash blocker: need remove all KVO relation before load blocker
  
  1.observer/keyPath invalid
  

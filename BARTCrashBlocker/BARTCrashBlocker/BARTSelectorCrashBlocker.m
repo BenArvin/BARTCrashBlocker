@@ -101,6 +101,15 @@
     pthread_mutex_unlock(&_mutexLock);
 }
 
+- (BOOL)working
+{
+    BOOL result = NO;
+    pthread_mutex_lock(&_mutexLock);
+    result = _blockerLoaded;
+    pthread_mutex_unlock(&_mutexLock);
+    return result;
+}
+
 - (id)scapegoatWithSelector:(SEL)selector
 {
     if (![self.scapegoat respondsToSelector:selector]) {
