@@ -20,7 +20,7 @@
 - (id)BARTCB_objectAtIndex:(NSUInteger)index
 {
     if (index >= self.count) {
-        [[BALogger sharedLogger] log:[NSString stringWithFormat:@"container crash, NSArray count = %ld, index = %lu", self.count, (unsigned long)index]];
+        [[BALogger sharedLogger] log:[NSString stringWithFormat:@"container crash, NSArray count = %ld, index = %lu", (unsigned long)self.count, (unsigned long)index]];
         return nil;
     } else {
         return [self BARTCB_objectAtIndex:index];
@@ -37,7 +37,7 @@
 - (id)BARTCB_objectAtIndex:(NSUInteger)index
 {
     if (index >= self.count) {
-        [[BALogger sharedLogger] log:[NSString stringWithFormat:@"container crash, NSMutableArray objectAtIndex:, count = %ld, index = %lu", self.count, (unsigned long)index]];
+        [[BALogger sharedLogger] log:[NSString stringWithFormat:@"container crash, NSMutableArray objectAtIndex:, count = %ld, index = %lu", (unsigned long)self.count, (unsigned long)index]];
         return nil;
     } else {
         return [self BARTCB_objectAtIndex:index];
@@ -61,7 +61,7 @@
         return;
     } else {
         if (index > self.count) {
-            [[BALogger sharedLogger] log:[NSString stringWithFormat:@"container crash, NSMutableArray insertObject:atIndex:, count = %ld, index = %lu", self.count, (unsigned long)index]];
+            [[BALogger sharedLogger] log:[NSString stringWithFormat:@"container crash, NSMutableArray insertObject:atIndex:, count = %ld, index = %lu", (unsigned long)self.count, (unsigned long)index]];
             [self addObject:anObject];
         } else {
             [self BARTCB_insertObject:anObject atIndex:index];
@@ -72,7 +72,7 @@
 - (void)BARTCB_removeObjectAtIndex:(NSUInteger)index;
 {
     if (index >= self.count) {
-        [[BALogger sharedLogger] log:[NSString stringWithFormat:@"container crash, NSMutableArray removeObjectAtIndex:, count = %ld, index = %lu", self.count, (unsigned long)index]];
+        [[BALogger sharedLogger] log:[NSString stringWithFormat:@"container crash, NSMutableArray removeObjectAtIndex:, count = %ld, index = %lu", (unsigned long)self.count, (unsigned long)index]];
         return;
     } else {
         [self BARTCB_removeObjectAtIndex:index];
@@ -82,7 +82,7 @@
 - (void)BARTCB_replaceObjectAtIndex:(NSUInteger)index withObject:(id)anObject
 {
     if (index >= self.count) {
-        [[BALogger sharedLogger] log:[NSString stringWithFormat:@"container crash, NSMutableArray replaceObjectAtIndex:withObject:, count = %ld, index = %lu", self.count, (unsigned long)index]];
+        [[BALogger sharedLogger] log:[NSString stringWithFormat:@"container crash, NSMutableArray replaceObjectAtIndex:withObject:, count = %ld, index = %lu", (unsigned long)self.count, (unsigned long)index]];
         return;
     } else if (!anObject) {
         [[BALogger sharedLogger] log:@"container crash, NSMutableArray replaceObjectAtIndex:withObject:, object = nil"];
@@ -136,7 +136,7 @@
         [[BALogger sharedLogger] log:@"container crash, NSString rangeOfString:options:range:locale:, searchString = nil"];
         return NSMakeRange(NSNotFound, 0);
     } else if (rangeOfReceiverToSearch.location > self.length || rangeOfReceiverToSearch.location + rangeOfReceiverToSearch.length > self.length) {
-        [[BALogger sharedLogger] log:[NSString stringWithFormat:@"container crash, NSString rangeOfString:options:range:locale:, self length = %ld, rangeOfReceiverToSearch = %@", self.length, NSStringFromRange(rangeOfReceiverToSearch)]];
+        [[BALogger sharedLogger] log:[NSString stringWithFormat:@"container crash, NSString rangeOfString:options:range:locale:, self length = %ld, rangeOfReceiverToSearch = %@", (unsigned long)self.length, NSStringFromRange(rangeOfReceiverToSearch)]];
         if (rangeOfReceiverToSearch.location > self.length) {
             return NSMakeRange(NSNotFound, 0);
         } else {
@@ -167,7 +167,7 @@
 - (void)BARTCB_replaceCharactersInRange:(NSRange)range withString:(NSString *)aString
 {
     if (range.location > self.length || range.location + range.length > self.length) {
-        [[BALogger sharedLogger] log:[NSString stringWithFormat:@"container crash, NSMutableString replaceCharactersInRange:withString:, self length = %ld, range = %@", self.length, NSStringFromRange(range)]];
+        [[BALogger sharedLogger] log:[NSString stringWithFormat:@"container crash, NSMutableString replaceCharactersInRange:withString:, self length = %ld, range = %@", (unsigned long)self.length, NSStringFromRange(range)]];
         return;
     } else if (!aString) {
         [[BALogger sharedLogger] log:@"container crash, NSMutableString replaceCharactersInRange:withString:, string = nil"];
@@ -184,7 +184,7 @@
         [[BALogger sharedLogger] log:@"container crash, NSMutableString insertString:atIndex:, string = nil"];
         return;
     } else if (loc > self.length) {
-        [[BALogger sharedLogger] log:[NSString stringWithFormat:@"container crash, NSMutableString insertString:atIndex:, self length = %ld, index = %lu", self.length, loc]];
+        [[BALogger sharedLogger] log:[NSString stringWithFormat:@"container crash, NSMutableString insertString:atIndex:, self length = %ld, index = %lu", (unsigned long)self.length, (unsigned long)loc]];
         [self appendString:aString];
         return;
     } else {
@@ -195,7 +195,7 @@
 - (void)BARTCB_deleteCharactersInRange:(NSRange)range
 {
     if (range.location > self.length || range.location + range.length > self.length) {
-        [[BALogger sharedLogger] log:[NSString stringWithFormat:@"container crash, NSMutableString deleteCharactersInRange:, self length = %ld, range = %@", self.length, NSStringFromRange(range)]];
+        [[BALogger sharedLogger] log:[NSString stringWithFormat:@"container crash, NSMutableString deleteCharactersInRange:, self length = %ld, range = %@", (unsigned long)self.length, NSStringFromRange(range)]];
         if (range.location > self.length) {
             return;
         } else {

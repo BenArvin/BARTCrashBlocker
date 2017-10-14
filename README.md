@@ -2,7 +2,7 @@
 ## Introduction
 BARTCrashBlocker is a Objective-C crash protector, implemented by runtime programming.
 
-It provide protection for 3 kind of crash:
+It provide protection for 3 kind of crashes:
 
 - unrecognized selector crash
 
