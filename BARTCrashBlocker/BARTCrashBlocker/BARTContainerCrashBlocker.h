@@ -6,8 +6,6 @@
 //  Copyright © 2017年 cn.BenArvin. All rights reserved.
 //
 
-#import "BARTBasicCrashBlocker.h"
-
 /**
  container crash blocker:
  
@@ -17,6 +15,14 @@
  
  3.NSString/NSMutableString
  */
-@interface BARTContainerCrashBlocker : BARTBasicCrashBlocker
+@interface BARTContainerCrashBlocker : NSObject
+
++ (instancetype)sharedBlocker;
+
+- (void)load;
+
+- (void)unload;
+
+- (BOOL)working;
 
 @end

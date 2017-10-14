@@ -8,15 +8,39 @@
 
 #import <Foundation/Foundation.h>
 
-typedef NS_ENUM(NSUInteger, BARTCrashBlockerModes) {
-    BARTCrashBlockerModesContainer = 1 << 0,//container crash(NSString, NSArray, NSDictionary...)
-    BARTCrashBlockerModesKVO       = 1 << 1,//KVO crash
-    BARTCrashBlockerModesSelector  = 1 << 2,//unrecognized selector crash
-};
-
 @interface BARTCrashBlocker : NSObject
 
-+ (void)loadBlocker:(BARTCrashBlockerModes)modes;
-+ (void)unloadBlocker:(BARTCrashBlockerModes)modes;
+/**
+ load container crash blockers
+ */
++ (void)loadContainerCrashBlocker;
+
+/**
+ unload container crash blockers
+ */
++ (void)unloadContainerCrashBlocker;
+
+/**
+ load unrecognized selector crash blockers
+
+ @param classPrefixs the class prefixs that blocker need block, so blocker can only check specific classes
+ (⚠️ATTENTION: blocker will not work if classPrefixs is null)
+ */
++ (void)loadSelectorCrashBlocker:(NSArray <NSString *> *)classPrefixs;
+
+/**
+ unload unrecognized selector crash blockers
+ */
++ (void)unloadSelectorCrashBlocker;
+
+/**
+ load KVO crash blockers(⚠️ATTENTION: should remove all KVO relation before load blocker)
+ */
++ (void)loadKVOCrashBlocker;
+
+/**
+ unload KVO crash blockers
+ */
++ (void)unloadKVOCrashBlocker;
 
 @end

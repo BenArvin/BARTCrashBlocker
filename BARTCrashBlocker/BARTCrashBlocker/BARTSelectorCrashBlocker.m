@@ -24,13 +24,27 @@
     BOOL _blockerLoaded;
 }
 
+@property (nonatomic) NSArray <NSString *> *classPrefixs;
 @property (nonatomic) BARTSelectorCrashBlockerScapegoat *scapegoat;
 
+- (BOOL)shouldBlockClass:(Class)class;
 - (id)scapegoatWithSelector:(SEL)selector;
 
 @end
 
 @implementation NSObject(BARTSelectorCrashBlockerCategory)
+
++ (BOOL)BARTCB_resolveClassMethod:(SEL)sel
+{
+    BOOL result = [self BARTCB_resolveClassMethod:sel];
+    return result;
+}
+
++ (BOOL)BARTCB_resolveInstanceMethod:(SEL)sel
+{
+    BOOL result = [self BARTCB_resolveInstanceMethod:sel];
+    return result;
+}
 
 - (id)BARTCB_forwardingTargetForSelector:(SEL)aSelector
 {
@@ -38,9 +52,24 @@
     if (result) {
         return result;
     } else {
-        [[BALogger sharedLogger] log:[NSString stringWithFormat:@"unrecognized selector crash, receiver calss = %@, selector = %@", [self class], NSStringFromSelector(aSelector)]];
-        return [[BARTSelectorCrashBlocker sharedBlocker] scapegoatWithSelector:aSelector];
+        if (![self respondsToSelector:aSelector] && [[BARTSelectorCrashBlocker sharedBlocker] shouldBlockClass:[self class]]) {
+            [[BALogger sharedLogger] log:[NSString stringWithFormat:@"unrecognized selector crash, receiver calss = %@, selector = %@", [self class], NSStringFromSelector(aSelector)]];
+            return [[BARTSelectorCrashBlocker sharedBlocker] scapegoatWithSelector:aSelector];
+        } else {
+            return result;
+        }
     }
+}
+
+- (NSMethodSignature *)BARTCB_methodSignatureForSelector:(SEL)aSelector
+{
+    NSMethodSignature *result = [self BARTCB_methodSignatureForSelector:aSelector];
+    return result;
+}
+
+- (void)BARTCB_forwardInvocation:(NSInvocation *)anInvocation
+{
+    [self BARTCB_forwardInvocation:anInvocation];
 }
 
 @end
@@ -79,13 +108,14 @@
     return selectorCrashBlocker;
 }
 
-- (void)load
+- (void)load:(NSArray <NSString *> *)classPrefixs
 {
     pthread_mutex_lock(&_mutexLock);
-    if (!_blockerLoaded) {
+    if (!_blockerLoaded && classPrefixs && classPrefixs.count > 0) {
+        _classPrefixs = classPrefixs;
         [self replaceMethods];
         _blockerLoaded = YES;
-        [[BALogger sharedLogger] log:@"unrecognized selector crash blocker loaded"];
+        [[BALogger sharedLogger] log:[NSString stringWithFormat:@"unrecognized selector crash blocker loaded, class prefixs = %@", [_classPrefixs componentsJoinedByString:@","]]];
     }
     pthread_mutex_unlock(&_mutexLock);
 }
@@ -110,6 +140,20 @@
     return result;
 }
 
+- (BOOL)shouldBlockClass:(Class)class
+{
+    if (!self.classPrefixs || self.classPrefixs.count == 0) {
+        return NO;
+    } else {
+        for (NSString *prefix in self.classPrefixs) {
+            if ([NSStringFromClass(class) rangeOfString:prefix].location == 0) {
+                return YES;
+            }
+        }
+        return NO;
+    }
+}
+
 - (id)scapegoatWithSelector:(SEL)selector
 {
     if (![self.scapegoat respondsToSelector:selector]) {
@@ -130,7 +174,11 @@
 #pragma mark - private method
 - (void)replaceMethods
 {
+    method_exchangeImplementations(class_getClassMethod([NSObject class], @selector(resolveClassMethod:)), class_getClassMethod([NSObject class], @selector(BARTCB_resolveClassMethod:)));
+    method_exchangeImplementations(class_getClassMethod([NSObject class], @selector(resolveInstanceMethod:)), class_getClassMethod([NSObject class], @selector(BARTCB_resolveInstanceMethod:)));
     method_exchangeImplementations(class_getInstanceMethod([NSObject class], @selector(forwardingTargetForSelector:)), class_getInstanceMethod([NSObject class], @selector(BARTCB_forwardingTargetForSelector:)));
+    method_exchangeImplementations(class_getInstanceMethod([NSObject class], @selector(methodSignatureForSelector:)), class_getInstanceMethod([NSObject class], @selector(BARTCB_methodSignatureForSelector:)));
+    method_exchangeImplementations(class_getInstanceMethod([NSObject class], @selector(forwardInvocation:)), class_getInstanceMethod([NSObject class], @selector(BARTCB_forwardInvocation:)));
 }
 
 @end

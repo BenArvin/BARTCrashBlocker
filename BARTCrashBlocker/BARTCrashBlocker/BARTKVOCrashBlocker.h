@@ -6,10 +6,8 @@
 //  Copyright © 2017年 cn.BenArvin. All rights reserved.
 //
 
-#import "BARTBasicCrashBlocker.h"
-
 /**
- KVO crash blocker: need remove all KVO relation before load blocker
+ KVO crash blocker(⚠️ATTENTION: should remove all KVO relation before load blocker)
  
  1.observer/keyPath invalid
  
@@ -17,6 +15,14 @@
  
  3.observer/observed target released
  */
-@interface BARTKVOCrashBlocker : BARTBasicCrashBlocker
+@interface BARTKVOCrashBlocker : NSObject
+
++ (instancetype)sharedBlocker;
+
+- (void)load;
+
+- (void)unload;
+
+- (BOOL)working;
 
 @end

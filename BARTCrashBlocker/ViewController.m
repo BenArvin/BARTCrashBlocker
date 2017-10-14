@@ -10,36 +10,44 @@
 #import "BARTKVOCrashBlocker.h"
 #import "BARTDeallocObserver.h"
 
-@interface TestInnerModel : NSObject
+@interface BATestInnerModel : NSObject
 
 @property (nonatomic) NSString *style;
 @property (nonatomic) UIImage *image;
 
 @end
 
-@implementation TestInnerModel
+@interface BATestSubClassModel : BATestInnerModel
 
 @end
 
-@interface TestModel : NSObject
+@implementation BATestInnerModel
+
+@end
+
+@implementation BATestSubClassModel
+
+@end
+
+@interface BATestModel : NSObject
 
 @property (nonatomic) NSString *style;
 @property (nonatomic) UIImage *image;
-@property (nonatomic) TestInnerModel *innerModel;
+@property (nonatomic) BATestInnerModel *innerModel;
 
 @end
 
-@implementation TestModel
+@implementation BATestModel
 
 @end
 
-@interface TestObserver : NSObject
+@interface BATestObserver : NSObject
 
 @property (nonatomic) UIImage *image;
 
 @end
 
-@implementation TestObserver
+@implementation BATestObserver
 
 - (void)observeValueForKeyPath:(nullable NSString *)keyPath ofObject:(nullable id)object change:(nullable NSDictionary<NSKeyValueChangeKey, id> *)change context:(nullable void *)context
 {
@@ -78,19 +86,21 @@
 
 - (void)buttonAction
 {
-    TestObserver *testObserver = [[TestObserver alloc] init];
-    testObserver.image = [UIImage imageNamed:@"testImage"];
-    TestModel *testModel = [[TestModel alloc] init];
-    testModel.image = [UIImage imageNamed:@"testImage"];
-    [testModel addObserver:testObserver forKeyPath:@"innerModel.style" options:NSKeyValueObservingOptionNew context:nil];
-    [testModel addObserver:testObserver forKeyPath:@"style" options:NSKeyValueObservingOptionNew context:nil];
-    testModel.style = @"hhhhhh";
-    testObserver = nil;
-    testModel.style = @"yyyyyy";
-    NSLog(@"---end");
-    
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(selectorAction) name:@"hhhhh" object:nil];
-    [[NSNotificationCenter defaultCenter] removeObserver:self];
+//    TestObserver *testObserver = [[TestObserver alloc] init];
+//    testObserver.image = [UIImage imageNamed:@"testImage"];
+//    TestModel *testModel = [[TestModel alloc] init];
+//    testModel.image = [UIImage imageNamed:@"testImage"];
+//    [testModel addObserver:testObserver forKeyPath:@"innerModel.style" options:NSKeyValueObservingOptionNew context:nil];
+//    [testModel addObserver:testObserver forKeyPath:@"style" options:NSKeyValueObservingOptionNew context:nil];
+//    testModel.style = @"hhhhhh";
+//    testObserver = nil;
+//    testModel.style = @"yyyyyy";
+//    NSLog(@"---end");
+//
+//    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(selectorAction) name:@"hhhhh" object:nil];
+//    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    BATestSubClassModel *model = [[BATestSubClassModel alloc] init];
+    [model performSelector:@selector(hhhhhh)];
 }
 
 - (void)selectorAction

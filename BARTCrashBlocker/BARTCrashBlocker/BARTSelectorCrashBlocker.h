@@ -6,11 +6,23 @@
 //  Copyright © 2017年 cn.BenArvin. All rights reserved.
 //
 
-#import "BARTBasicCrashBlocker.h"
-
 /**
  unrecognized selector crash blocker
  */
-@interface BARTSelectorCrashBlocker : BARTBasicCrashBlocker
+@interface BARTSelectorCrashBlocker : NSObject
+
++ (instancetype)sharedBlocker;
+
+/**
+ load crash blocker
+ 
+ @param classPrefixs the class prefixs that blocker need block, so blocker can only check specific classes
+ (⚠️ATTENTION: blocker will not work if classPrefixs is null)
+ */
+- (void)load:(NSArray <NSString *> *)classPrefixs;
+
+- (void)unload;
+
+- (BOOL)working;
 
 @end

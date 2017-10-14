@@ -11,7 +11,6 @@
 #import <objc/runtime.h>
 #import <pthread.h>
 #import "BARTAssociateCategory.h"
-#import "BALogger.h"
 
 #define KEY_ASSOCIATED_DEALLOC_OBSERVE_INFO  "BARTObjectAssociatedDeallocObserveInfo"
 
@@ -67,7 +66,6 @@
     BARTDeallocObserveInfo *observeInfo = objc_getAssociatedObject(self, KEY_ASSOCIATED_DEALLOC_OBSERVE_INFO);
     if (observeInfo) {
         observeInfo.needFeedback = NO;
-        [[BALogger sharedLogger] log:[NSString stringWithFormat:@"(%@ *)%@ will dealloc", observeInfo.ownerClass, observeInfo.ownerAddress]];
         if (observeInfo.willDeallocSelector && [self respondsToSelector:observeInfo.willDeallocSelector]) {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Warc-performSelector-leaks"
@@ -77,7 +75,6 @@
     }
     [self BARTCB_dealloc];
     if (observeInfo) {
-        [[BALogger sharedLogger] log:[NSString stringWithFormat:@"(%@ *)%@ did dealloc", observeInfo.ownerClass, observeInfo.ownerAddress]];
         [[BARTDeallocObserver sharedObserver] reduceObservingCount];
         if (observeInfo.didDeallocBlock) {
             observeInfo.didDeallocBlock();
@@ -95,7 +92,6 @@
         observeInfo.didDeallocBlock = didDeallocBlock;
         [NSObject setAssociatedAttribute:observeInfo withKey:KEY_ASSOCIATED_DEALLOC_OBSERVE_INFO policy:OBJC_ASSOCIATION_RETAIN_NONATOMIC to:self];
         [[BARTDeallocObserver sharedObserver] addObservingCount];
-        [[BALogger sharedLogger] log:[NSString stringWithFormat:@"(%@ *)%@ start dealloc observing", observeInfo.ownerClass, observeInfo.ownerAddress]];
     }
 }
 
@@ -106,7 +102,6 @@
         observeInfo.needFeedback = NO;
         [NSObject removeAssociatedAttribute:KEY_ASSOCIATED_DEALLOC_OBSERVE_INFO from:self];
         [[BARTDeallocObserver sharedObserver] reduceObservingCount];
-        [[BALogger sharedLogger] log:[NSString stringWithFormat:@"(%@ *)%@ stop dealloc observing", observeInfo.ownerClass, observeInfo.ownerAddress]];
     }
 }
 
@@ -168,7 +163,6 @@
     if (!_observerLoaded) {
         [self replaceMethods];
         _observerLoaded = YES;
-        [[BALogger sharedLogger] log:@"dealloc observer loaded"];
     }
     pthread_mutex_unlock(&_mutexLock);
 }
@@ -179,7 +173,6 @@
     if (_observerLoaded) {
         [self replaceMethods];
         _observerLoaded = NO;
-        [[BALogger sharedLogger] log:@"dealloc observer unloaded"];
     }
     pthread_mutex_unlock(&_mutexLock);
 }

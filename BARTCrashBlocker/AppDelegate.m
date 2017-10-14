@@ -19,7 +19,9 @@
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions {
     // Override point for customization after application launch.
     
-    [BARTCrashBlocker loadBlocker:BARTCrashBlockerModesSelector | BARTCrashBlockerModesContainer | BARTCrashBlockerModesKVO];
+    [BARTCrashBlocker loadKVOCrashBlocker];
+    [BARTCrashBlocker loadContainerCrashBlocker];
+    [BARTCrashBlocker loadSelectorCrashBlocker:@[@"BA"]];
     return YES;
 }
 

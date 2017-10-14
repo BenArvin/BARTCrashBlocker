@@ -14,17 +14,35 @@
 @implementation BARTCrashBlocker
 
 #pragma mark - public method
-+ (void)loadBlocker:(BARTCrashBlockerModes)modes
++ (void)loadContainerCrashBlocker
 {
-    [[self sharedCrashBlocker] loadBlockersWithModes:modes];
+    [[self sharedCrashBlocker] loadContainerCrashBlocker];
 }
 
-+ (void)unloadBlocker:(BARTCrashBlockerModes)modes
++ (void)unloadContainerCrashBlocker
 {
-    [[self sharedCrashBlocker] unloadBlockersWithModes:modes];
+    [[self sharedCrashBlocker] unloadContainerCrashBlocker];
 }
 
-#pragma mark - property method
++ (void)loadSelectorCrashBlocker:(NSArray <NSString *> *)classPrefixs
+{
+    [[self sharedCrashBlocker] loadSelectorCrashBlocker:classPrefixs];
+}
+
++ (void)unloadSelectorCrashBlocker
+{
+    [[self sharedCrashBlocker] unloadSelectorCrashBlocker];
+}
+
++ (void)loadKVOCrashBlocker
+{
+    [[self sharedCrashBlocker] loadKVOCrashBlocker];
+}
+
++ (void)unloadKVOCrashBlocker
+{
+    [[self sharedCrashBlocker] unloadKVOCrashBlocker];
+}
 
 #pragma mark - private method
 + (BARTCrashBlocker *)sharedCrashBlocker
@@ -37,30 +55,34 @@
     return crashBlocker;
 }
 
-- (void)loadBlockersWithModes:(BARTCrashBlockerModes)modes
+- (void)loadContainerCrashBlocker
 {
-    if ((modes & BARTCrashBlockerModesSelector) == BARTCrashBlockerModesSelector) {
-        [[BARTSelectorCrashBlocker sharedBlocker] load];
-    }
-    if ((modes & BARTCrashBlockerModesContainer) == BARTCrashBlockerModesContainer) {
-        [[BARTContainerCrashBlocker sharedBlocker] load];
-    }
-    if ((modes & BARTCrashBlockerModesKVO) == BARTCrashBlockerModesKVO) {
-        [[BARTKVOCrashBlocker sharedBlocker] load];
-    }
+    [[BARTContainerCrashBlocker sharedBlocker] load];
 }
 
-- (void)unloadBlockersWithModes:(BARTCrashBlockerModes)modes
+- (void)unloadContainerCrashBlocker
 {
-    if ((modes & BARTCrashBlockerModesSelector) == BARTCrashBlockerModesSelector) {
-        [[BARTSelectorCrashBlocker sharedBlocker] unload];
-    }
-    if ((modes & BARTCrashBlockerModesContainer) == BARTCrashBlockerModesContainer) {
-        [[BARTContainerCrashBlocker sharedBlocker] unload];
-    }
-    if ((modes & BARTCrashBlockerModesKVO) == BARTCrashBlockerModesKVO) {
-        [[BARTKVOCrashBlocker sharedBlocker] unload];
-    }
+    [[BARTContainerCrashBlocker sharedBlocker] unload];
+}
+
+- (void)loadSelectorCrashBlocker:(NSArray <NSString *> *)classPrefixs
+{
+    [[BARTSelectorCrashBlocker sharedBlocker] load:classPrefixs];
+}
+
+- (void)unloadSelectorCrashBlocker
+{
+    [[BARTSelectorCrashBlocker sharedBlocker] unload];
+}
+
+- (void)loadKVOCrashBlocker
+{
+    [[BARTKVOCrashBlocker sharedBlocker] load];
+}
+
+- (void)unloadKVOCrashBlocker
+{
+    [[BARTKVOCrashBlocker sharedBlocker] unload];
 }
 
 @end

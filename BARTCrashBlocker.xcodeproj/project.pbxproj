@@ -20,7 +20,6 @@
 		253FC4811F8B73BF00535BCC /* BARTContainerCrashBlocker.m in Sources */ = {isa = PBXBuildFile; fileRef = 253FC4801F8B73BF00535BCC /* BARTContainerCrashBlocker.m */; };
 		25922DAC1F8F62310089F335 /* BARTDeallocObserver.m in Sources */ = {isa = PBXBuildFile; fileRef = 25922DAB1F8F62310089F335 /* BARTDeallocObserver.m */; };
 		25922DAF1F8F643C0089F335 /* BARTAssociateCategory.m in Sources */ = {isa = PBXBuildFile; fileRef = 25922DAE1F8F643C0089F335 /* BARTAssociateCategory.m */; };
-		25935BB21F8E11B800BBA525 /* BARTBasicCrashBlocker.m in Sources */ = {isa = PBXBuildFile; fileRef = 25935BB11F8E11B800BBA525 /* BARTBasicCrashBlocker.m */; };
 		259436E41F8C6B8B003A6C20 /* BARTKVOCrashBlocker.m in Sources */ = {isa = PBXBuildFile; fileRef = 259436E31F8C6B8B003A6C20 /* BARTKVOCrashBlocker.m */; };
 /* End PBXBuildFile section */
 
@@ -69,8 +68,6 @@
 		25922DAB1F8F62310089F335 /* BARTDeallocObserver.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = BARTDeallocObserver.m; sourceTree = "<group>"; };
 		25922DAD1F8F64340089F335 /* BARTAssociateCategory.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BARTAssociateCategory.h; sourceTree = "<group>"; };
 		25922DAE1F8F643C0089F335 /* BARTAssociateCategory.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = BARTAssociateCategory.m; sourceTree = "<group>"; };
-		25935BB01F8E11AA00BBA525 /* BARTBasicCrashBlocker.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BARTBasicCrashBlocker.h; sourceTree = "<group>"; };
-		25935BB11F8E11B800BBA525 /* BARTBasicCrashBlocker.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = BARTBasicCrashBlocker.m; sourceTree = "<group>"; };
 		259436E21F8C6B82003A6C20 /* BARTKVOCrashBlocker.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BARTKVOCrashBlocker.h; sourceTree = "<group>"; };
 		259436E31F8C6B8B003A6C20 /* BARTKVOCrashBlocker.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = BARTKVOCrashBlocker.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -159,8 +156,6 @@
 			children = (
 				253FC4751F8B1FF800535BCC /* BARTCrashBlocker.h */,
 				253FC4761F8B1FF800535BCC /* BARTCrashBlocker.m */,
-				25935BB01F8E11AA00BBA525 /* BARTBasicCrashBlocker.h */,
-				25935BB11F8E11B800BBA525 /* BARTBasicCrashBlocker.m */,
 				25922DAD1F8F64340089F335 /* BARTAssociateCategory.h */,
 				25922DAE1F8F643C0089F335 /* BARTAssociateCategory.m */,
 				253FC4781F8B4B1F00535BCC /* BARTSelectorCrashBlocker.h */,
@@ -317,7 +312,6 @@
 				253FC4811F8B73BF00535BCC /* BARTContainerCrashBlocker.m in Sources */,
 				259436E41F8C6B8B003A6C20 /* BARTKVOCrashBlocker.m in Sources */,
 				253FC47A1F8B4B2700535BCC /* BARTSelectorCrashBlocker.m in Sources */,
-				25935BB21F8E11B800BBA525 /* BARTBasicCrashBlocker.m in Sources */,
 				253FC4331F8B113900535BCC /* main.m in Sources */,
 				253FC4251F8B113900535BCC /* AppDelegate.m in Sources */,
 			);
