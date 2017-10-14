@@ -34,18 +34,6 @@
 
 @implementation NSObject(BARTSelectorCrashBlockerCategory)
 
-+ (BOOL)BARTCB_resolveClassMethod:(SEL)sel
-{
-    BOOL result = [self BARTCB_resolveClassMethod:sel];
-    return result;
-}
-
-+ (BOOL)BARTCB_resolveInstanceMethod:(SEL)sel
-{
-    BOOL result = [self BARTCB_resolveInstanceMethod:sel];
-    return result;
-}
-
 - (id)BARTCB_forwardingTargetForSelector:(SEL)aSelector
 {
     id result = [self BARTCB_forwardingTargetForSelector:aSelector];
@@ -59,17 +47,6 @@
             return result;
         }
     }
-}
-
-- (NSMethodSignature *)BARTCB_methodSignatureForSelector:(SEL)aSelector
-{
-    NSMethodSignature *result = [self BARTCB_methodSignatureForSelector:aSelector];
-    return result;
-}
-
-- (void)BARTCB_forwardInvocation:(NSInvocation *)anInvocation
-{
-    [self BARTCB_forwardInvocation:anInvocation];
 }
 
 @end
@@ -174,11 +151,7 @@
 #pragma mark - private method
 - (void)replaceMethods
 {
-    method_exchangeImplementations(class_getClassMethod([NSObject class], @selector(resolveClassMethod:)), class_getClassMethod([NSObject class], @selector(BARTCB_resolveClassMethod:)));
-    method_exchangeImplementations(class_getClassMethod([NSObject class], @selector(resolveInstanceMethod:)), class_getClassMethod([NSObject class], @selector(BARTCB_resolveInstanceMethod:)));
     method_exchangeImplementations(class_getInstanceMethod([NSObject class], @selector(forwardingTargetForSelector:)), class_getInstanceMethod([NSObject class], @selector(BARTCB_forwardingTargetForSelector:)));
-    method_exchangeImplementations(class_getInstanceMethod([NSObject class], @selector(methodSignatureForSelector:)), class_getInstanceMethod([NSObject class], @selector(BARTCB_methodSignatureForSelector:)));
-    method_exchangeImplementations(class_getInstanceMethod([NSObject class], @selector(forwardInvocation:)), class_getInstanceMethod([NSObject class], @selector(BARTCB_forwardInvocation:)));
 }
 
 @end
