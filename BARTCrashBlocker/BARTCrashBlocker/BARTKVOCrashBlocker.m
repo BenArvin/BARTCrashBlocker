@@ -11,26 +11,50 @@
 #import <objc/runtime.h>
 #import <pthread.h>
 #import "BARTAssociateCategory.h"
+#import "BARTDeallocObserver.h"
 #import "BALogger.h"
 
-#define KEY_ASSOCIATED_PROXY "BARTObjectAssociatedProxy"
+#define KEY_ASSOCIATED_RELATIONSHIP_INFO "BARTObjectAssociatedRelationshipInfo"
+#define KEY_ASSOCIATED_OWNER_INFO        "BARTObjectAssociatedOwnerInfo"
 
-@interface BARTKVOProxyContainer : NSObject
+@interface BARTKVOOwnerItem : NSObject
 
-@property (nonatomic, weak) id context;
-@property (nonatomic, copy) NSString *contextClass;
+@property (nonatomic, weak) id owner;
+@property (nonatomic, copy) NSString *ownerClass;
+@property (nonatomic, copy) NSString *ownerAddress;
 
 @end
 
-@interface BARTKVOProxy : NSObject
+@interface BARTKVOOwnerInfo : NSObject
 
-@property (nonatomic, weak) id target;//the object be observed
-@property (nonatomic, copy) NSString *targetClass;//class of the object be observed
-@property (nonatomic, strong) NSMutableDictionary *KVORelationsDic;//key: keyPath, value: <NSArray *>observers
+@property (nonatomic, strong) NSMutableDictionary *ownersDic;//key: ownerAddress, value: <BARTKVOOwnerItem *>ownerItem
 
-- (BOOL)isKVORelationRegistered:(id)observer keyPath:(NSString *)keyPath;
-- (void)registerKVORelation:(id)observer keyPath:(NSString *)keyPath;
-- (void)unregisterKVORelation:(id)observer keyPath:(NSString *)keyPath;
+@end
+
+@interface BARTKVOObserverInfo : NSObject
+
+@property (nonatomic, weak) id observer;
+@property (nonatomic, copy) NSString *observerClass;
+@property (nonatomic, copy) NSString *observerAddress;
+
+@property (nonatomic, assign) NSUInteger options;
+
+@property (nonatomic) void * context;
+
+@end
+
+@interface BARTKVORelationInfo : NSObject
+
+@property (nonatomic, strong) NSMutableDictionary *relationsDic;//key: keyPath, value: <NSMutableArray <BARTKVOObserverInfo *> *>observers
+
+- (BOOL)isRelationRegistered:(id)observer keyPath:(NSString *)keyPath options:(NSKeyValueObservingOptions)options context:(nullable void *)context;
+- (BOOL)isRelationRegistered:(id)observer keyPath:(NSString *)keyPath context:(nullable void *)context;
+- (BOOL)isRelationRegistered:(id)observer keyPath:(NSString *)keyPath;
+
+- (void)registerRelation:(id)observer keyPath:(NSString *)keyPath options:(NSKeyValueObservingOptions)options context:(nullable void *)context;
+
+- (void)unregisterRelation:(id)observer keyPath:(NSString *)keyPath context:(nullable void *)context;
+- (void)unregisterRelation:(id)observer keyPath:(NSString *)keyPath;
 
 @end
 
@@ -41,6 +65,215 @@
     pthread_mutex_t _mutexLock;
     BOOL _mutexLockValid;
     BOOL _blockerLoaded;
+}
+
+@end
+
+@implementation BARTKVOOwnerItem
+@end
+
+@implementation BARTKVOOwnerInfo
+
+- (instancetype)init
+{
+    self = [super init];
+    if (self) {
+        _ownersDic = [[NSMutableDictionary alloc] init];
+    }
+    return self;
+}
+
+#pragma mark - public method
+- (BOOL)isOwnerRegistered:(id)object
+{
+    if ([[self.ownersDic allKeys] containsObject:[NSString stringWithFormat:@"%p", object]]) {
+        return YES;
+    } else {
+        return NO;
+    }
+}
+
+- (void)registerOwner:(id)object
+{
+    if (!object) {
+        return;
+    }
+    
+    NSString *objectAddress = [NSString stringWithFormat:@"%p", object];
+    if ([[self.ownersDic allKeys] containsObject:objectAddress]) {
+        return;
+    }
+    BARTKVOOwnerItem *newItem = [[BARTKVOOwnerItem alloc] init];
+    newItem.owner = object;
+    newItem.ownerClass = NSStringFromClass([object class]);
+    newItem.ownerAddress = objectAddress;
+    [self.ownersDic setObject:newItem forKey:objectAddress];
+}
+
+- (void)unregisterOwner:(id)object
+{
+    if (!object) {
+        return;
+    }
+    NSString *objectAddress = [NSString stringWithFormat:@"%p", object];
+    if ([[self.ownersDic allKeys] containsObject:objectAddress]) {
+        [self.ownersDic removeObjectForKey:objectAddress];
+    }
+}
+
+@end
+
+@implementation BARTKVOObserverInfo
+
+- (void)setObserver:(id)observer
+{
+    if (_observer != observer) {
+        _observer = observer;
+        _observerClass = NSStringFromClass([_observer class]);
+        _observerAddress = [NSString stringWithFormat:@"%p", observer];
+    }
+}
+
+@end
+
+@implementation BARTKVORelationInfo
+
+- (instancetype)init
+{
+    self = [super init];
+    if (self) {
+        _relationsDic = [[NSMutableDictionary alloc] init];
+    }
+    return self;
+}
+
+#pragma mark - public method
+- (BOOL)isRelationRegistered:(id)observer keyPath:(NSString *)keyPath options:(NSKeyValueObservingOptions)options context:(nullable void *)context
+{
+    if (!observer || !keyPath || keyPath.length == 0) {
+        return NO;
+    }
+    NSString *observerAddress = [NSString stringWithFormat:@"%p", observer];
+    NSMutableArray *observersArray = [self.relationsDic objectForKey:keyPath];
+    if (observersArray) {
+        for (BARTKVOObserverInfo *observerInfo in observersArray) {
+            if ([observerInfo.observerAddress isEqualToString:observerAddress] && context == observerInfo.context && options == observerInfo.options) {
+                return YES;
+            }
+        }
+        return NO;
+    } else {
+        return NO;
+    }
+}
+
+- (BOOL)isRelationRegistered:(id)observer keyPath:(NSString *)keyPath context:(nullable void *)context
+{
+    if (!observer || !keyPath || keyPath.length == 0) {
+        return NO;
+    }
+    NSString *observerAddress = [NSString stringWithFormat:@"%p", observer];
+    NSMutableArray *observersArray = [self.relationsDic objectForKey:keyPath];
+    if (observersArray) {
+        for (BARTKVOObserverInfo *observerInfo in observersArray) {
+            if ([observerInfo.observerAddress isEqualToString:observerAddress] && context == observerInfo.context) {
+                return YES;
+            }
+        }
+        return NO;
+    } else {
+        return NO;
+    }
+}
+
+- (BOOL)isRelationRegistered:(id)observer keyPath:(NSString *)keyPath
+{
+    if (!observer || !keyPath || keyPath.length == 0) {
+        return NO;
+    }
+    NSString *observerAddress = [NSString stringWithFormat:@"%p", observer];
+    NSMutableArray *observersArray = [self.relationsDic objectForKey:keyPath];
+    if (observersArray) {
+        for (BARTKVOObserverInfo *observerInfo in observersArray) {
+            if ([observerInfo.observerAddress isEqualToString:observerAddress]) {
+                return YES;
+            }
+        }
+        return NO;
+    } else {
+        return NO;
+    }
+}
+
+- (void)registerRelation:(id)observer keyPath:(NSString *)keyPath options:(NSKeyValueObservingOptions)options context:(nullable void *)context
+{
+    if (!observer || !keyPath || keyPath.length == 0) {
+        return;
+    }
+    NSMutableArray *observersArray = [self.relationsDic objectForKey:keyPath];
+    if (!observersArray) {
+        observersArray = [[NSMutableArray alloc] init];
+    }
+    BARTKVOObserverInfo *newObserverInfo = [[BARTKVOObserverInfo alloc] init];
+    newObserverInfo.observer = observer;
+    newObserverInfo.options = options;
+    newObserverInfo.context = context;
+    [observersArray addObject:newObserverInfo];
+    [self.relationsDic setObject:observersArray forKey:keyPath];
+}
+
+- (void)unregisterRelation:(id)observer keyPath:(NSString *)keyPath context:(nullable void *)context
+{
+    if (!observer || !keyPath || keyPath.length == 0) {
+        return;
+    }
+    NSString *observerAddress = [NSString stringWithFormat:@"%p", observer];
+    NSMutableArray *observersArray = [self.relationsDic objectForKey:keyPath];
+    if (observersArray) {
+        BARTKVOObserverInfo *observerInfoNeedDelete = nil;
+        for (BARTKVOObserverInfo *item in observersArray) {
+            if ([item.observerAddress isEqualToString:observerAddress] && context == item.context) {
+                observerInfoNeedDelete = item;
+                break;
+            }
+        }
+        
+        if (observerInfoNeedDelete) {
+            [observersArray removeObject:observerInfoNeedDelete];
+            if (observersArray.count > 0) {
+                [self.relationsDic setObject:observersArray forKey:keyPath];
+            } else {
+                [self.relationsDic removeObjectForKey:keyPath];
+            }
+        }
+    }
+}
+
+- (void)unregisterRelation:(id)observer keyPath:(NSString *)keyPath
+{
+    if (!observer || !keyPath || keyPath.length == 0) {
+        return;
+    }
+    NSString *observerAddress = [NSString stringWithFormat:@"%p", observer];
+    NSMutableArray *observersArray = [self.relationsDic objectForKey:keyPath];
+    if (observersArray) {
+        BARTKVOObserverInfo *observerInfoNeedDelete = nil;
+        for (BARTKVOObserverInfo *item in observersArray) {
+            if ([item.observerAddress isEqualToString:observerAddress]) {
+                observerInfoNeedDelete = item;
+                break;
+            }
+        }
+        
+        if (observerInfoNeedDelete) {
+            [observersArray removeObject:observerInfoNeedDelete];
+            if (observersArray.count > 0) {
+                [self.relationsDic setObject:observersArray forKey:keyPath];
+            } else {
+                [self.relationsDic removeObjectForKey:keyPath];
+            }
+        }
+    }
 }
 
 @end
@@ -71,7 +304,7 @@
         [[BALogger sharedLogger] log:[NSString stringWithFormat:@"KVO crash, removeObserver:forKeyPath:context:, keyPath invalid, keyPath = %@, observed target class = %@", keyPath, [self class]]];
         return;
     }
-    [self unregisterKVORelation:observer forKeyPath:keyPath context:context];
+    [self unregisterKVORelation:observer forKeyPath:keyPath];
 }
 
 - (void)BARTCB_removeObserver:(NSObject *)observer forKeyPath:(NSString *)keyPath
@@ -87,32 +320,67 @@
     [self unregisterKVORelation:observer forKeyPath:keyPath];
 }
 
-#pragma mark - private method
-- (BARTKVOProxy *)KVOProxy
+#pragma mark - public method
+- (void)removeSpecificKVORelation:(id)observer
 {
-    return [NSObject getAssociatedAttribute:KEY_ASSOCIATED_PROXY from:self];
-}
-
-- (BARTKVOProxy *)setKVOProxy
-{
-    BARTKVOProxy *result = [self KVOProxy];
-    if (!result) {
-        result = [[BARTKVOProxy alloc] init];
-        result.target = self;
-        result.targetClass = NSStringFromClass([self class]);
-        [NSObject setAssociatedAttribute:result withKey:KEY_ASSOCIATED_PROXY policy:OBJC_ASSOCIATION_RETAIN_NONATOMIC to:self];
+    if (!observer) {
+        return;
     }
-    return result;
+    
+    BARTKVORelationInfo *info = [self getRelationInfo];
+    if (info) {
+        NSMutableArray *invalidKeyPaths = nil;
+        for (NSString *keyPath in [info.relationsDic allKeys]) {
+            NSMutableArray *observerInfos = [info.relationsDic objectForKey:keyPath];
+            BARTKVOObserverInfo *invalidObserverInfo = nil;
+            for (BARTKVOObserverInfo *observerInfo in observerInfos) {
+                if (observerInfo.observer == observer || [observerInfo.observerAddress isEqualToString:[NSString stringWithFormat:@"%p", observer]]) {
+                    [self BARTCB_removeObserver:observer forKeyPath:keyPath];
+                    invalidObserverInfo = observerInfo;
+                    break;
+                }
+            }
+            if (invalidObserverInfo) {
+                [observerInfos removeObject:invalidObserverInfo];
+                if (observerInfos.count == 0) {
+                    if (!invalidKeyPaths) {
+                        invalidKeyPaths = [[NSMutableArray alloc] init];
+                    }
+                    [invalidKeyPaths addObject:keyPath];
+                }
+            }
+        }
+        if (invalidKeyPaths && invalidKeyPaths.count > 0) {
+            [info.relationsDic removeObjectsForKeys:invalidKeyPaths];
+        }
+    }
 }
 
-- (dispatch_semaphore_t)KVOCrashBlockerSemaphore
+#pragma mark - private method
+#pragma mark owner info method
+- (BARTKVOOwnerInfo *)getKVOOwnerInfo
 {
-    static dispatch_semaphore_t KVOCrashBlockerSemaphore;
-    static dispatch_once_t onceToken;
-    dispatch_once(&onceToken, ^{
-        KVOCrashBlockerSemaphore = dispatch_semaphore_create(1);
-    });
-    return KVOCrashBlockerSemaphore;
+    return [NSObject getAssociatedAttribute:KEY_ASSOCIATED_OWNER_INFO from:self];
+}
+
+- (void)setKVOOwnerInfo:(BARTKVOOwnerInfo *)info
+{
+    if (info) {
+        [NSObject setAssociatedAttribute:info withKey:KEY_ASSOCIATED_OWNER_INFO policy:OBJC_ASSOCIATION_RETAIN_NONATOMIC to:self];
+    }
+}
+
+#pragma mark relation info method
+- (BARTKVORelationInfo *)getRelationInfo
+{
+    return [NSObject getAssociatedAttribute:KEY_ASSOCIATED_RELATIONSHIP_INFO from:self];
+}
+
+- (void)setRelationInfo:(BARTKVORelationInfo *)info
+{
+    if (info) {
+        [NSObject setAssociatedAttribute:info withKey:KEY_ASSOCIATED_RELATIONSHIP_INFO policy:OBJC_ASSOCIATION_RETAIN_NONATOMIC to:self];
+    }
 }
 
 - (void)registerKVORelation:(id)observer forKeyPath:(NSString *)keyPath options:(NSKeyValueObservingOptions)options context:(nullable void *)context
@@ -120,15 +388,31 @@
     dispatch_semaphore_wait([self KVOCrashBlockerSemaphore], DISPATCH_TIME_FOREVER);
     
     BOOL KVORelationRegistered = NO;
-    BARTKVOProxy *KVOProxy = [self KVOProxy];
-    if (KVOProxy) {
-        KVORelationRegistered = [KVOProxy isKVORelationRegistered:observer keyPath:keyPath];
+    BARTKVORelationInfo *relationInfo = [self getRelationInfo];
+    if (relationInfo) {
+        KVORelationRegistered = [relationInfo isRelationRegistered:observer keyPath:keyPath options:options context:context];
     } else {
-        KVOProxy = [self setKVOProxy];
+        relationInfo = [[BARTKVORelationInfo alloc] init];
+        [self setRelationInfo:relationInfo];
     }
     if (!KVORelationRegistered) {
-        [self BARTCB_addObserver:KVOProxy forKeyPath:keyPath options:options context:context];
-        [KVOProxy registerKVORelation:observer keyPath:keyPath];
+        //register KVO relation
+        [relationInfo registerRelation:observer keyPath:keyPath options:options context:context];
+        
+        //register KVO owner
+        BARTKVOOwnerInfo *ownerInfo = [observer getKVOOwnerInfo];
+        if (!ownerInfo) {
+            ownerInfo = [[BARTKVOOwnerInfo alloc] init];
+            [observer setKVOOwnerInfo:ownerInfo];
+        }
+        [ownerInfo registerOwner:self];
+        
+        //start dealloc observer
+        [self startDeallocObserving:@selector(selfWillDeallocAction) didDeallocBlock:nil];
+        [observer startDeallocObserving:@selector(selfWillDeallocAction) didDeallocBlock:nil];
+        
+        //real start KVO action
+        [self BARTCB_addObserver:observer forKeyPath:keyPath options:options context:context];
     }
     
     dispatch_semaphore_signal([self KVOCrashBlockerSemaphore]);
@@ -143,18 +427,39 @@
     dispatch_semaphore_wait([self KVOCrashBlockerSemaphore], DISPATCH_TIME_FOREVER);
     
     BOOL KVORelationRegistered = NO;
-    BARTKVOProxy *KVOProxy = [self KVOProxy];
-    if (KVOProxy) {
-        KVORelationRegistered = [KVOProxy isKVORelationRegistered:observer keyPath:keyPath];
+    BARTKVORelationInfo *relationInfo = [self getRelationInfo];
+    if (relationInfo) {
+        KVORelationRegistered = [relationInfo isRelationRegistered:observer keyPath:keyPath context:context];
+    } else {
+        [self stopDeallocObserving];
     }
     if (KVORelationRegistered) {
-        [self BARTCB_removeObserver:KVOProxy forKeyPath:keyPath context:context];
-        [KVOProxy unregisterKVORelation:observer keyPath:keyPath];
+        //unregister KVO relation
+        [relationInfo unregisterRelation:observer keyPath:keyPath context:context];
+        
+        //unregister KVO owner
+        BARTKVOOwnerInfo *ownerInfo = [observer getKVOOwnerInfo];
+        if (ownerInfo) {
+            [ownerInfo unregisterOwner:self];
+            if (ownerInfo.ownersDic.count == 0) {
+                [observer stopDeallocObserving];
+            }
+        } else {
+            [observer stopDeallocObserving];
+        }
+        
+        //stop dealloc observing if need
+        if (relationInfo.relationsDic.count == 0) {
+            [self stopDeallocObserving];
+        }
+        
+        //real start KVO action
+        [self BARTCB_removeObserver:observer forKeyPath:keyPath context:context];
     }
     
     dispatch_semaphore_signal([self KVOCrashBlockerSemaphore]);
     
-    if (KVOProxy && !KVORelationRegistered) {
+    if (!KVORelationRegistered) {
         [[BALogger sharedLogger] log:[NSString stringWithFormat:@"KVO crash, remove unregistered observer, observer class = %@, keyPath = %@, observed target class = %@", [observer class], keyPath, [self class]]];
     }
 }
@@ -164,20 +469,84 @@
     dispatch_semaphore_wait([self KVOCrashBlockerSemaphore], DISPATCH_TIME_FOREVER);
     
     BOOL KVORelationRegistered = NO;
-    BARTKVOProxy *KVOProxy = [self KVOProxy];
-    if (KVOProxy) {
-        KVORelationRegistered = [KVOProxy isKVORelationRegistered:observer keyPath:keyPath];
+    BARTKVORelationInfo *relationInfo = [self getRelationInfo];
+    if (relationInfo) {
+        KVORelationRegistered = [relationInfo isRelationRegistered:observer keyPath:keyPath];
+    } else {
+        [self stopDeallocObserving];
     }
     if (KVORelationRegistered) {
-        [self BARTCB_removeObserver:KVOProxy forKeyPath:keyPath];
-        [KVOProxy unregisterKVORelation:observer keyPath:keyPath];
+        //unregister KVO relation
+        [relationInfo unregisterRelation:observer keyPath:keyPath];
+        
+        //unregister KVO owner
+        BARTKVOOwnerInfo *ownerInfo = [observer getKVOOwnerInfo];
+        if (ownerInfo) {
+            [ownerInfo unregisterOwner:self];
+            if (ownerInfo.ownersDic.count == 0) {
+                [observer stopDeallocObserving];
+            }
+        } else {
+            [observer stopDeallocObserving];
+        }
+        
+        //stop dealloc observing if need
+        if (relationInfo.relationsDic.count == 0) {
+            [self stopDeallocObserving];
+        }
+        
+        //real start KVO action
+        [self BARTCB_removeObserver:observer forKeyPath:keyPath];
     }
     
     dispatch_semaphore_signal([self KVOCrashBlockerSemaphore]);
     
-    if (KVOProxy && !KVORelationRegistered) {
+    if (!KVORelationRegistered) {
         [[BALogger sharedLogger] log:[NSString stringWithFormat:@"KVO crash, remove unregistered observer, observer class = %@, keyPath = %@, observed target class = %@", [observer class], keyPath, [self class]]];
     }
+}
+
+#pragma mark others
+- (void)selfWillDeallocAction
+{
+    dispatch_semaphore_wait([self KVOCrashBlockerSemaphore], DISPATCH_TIME_FOREVER);
+    
+    BARTKVORelationInfo *relationInfo = objc_getAssociatedObject(self, KEY_ASSOCIATED_RELATIONSHIP_INFO);
+    if (relationInfo.relationsDic && relationInfo.relationsDic.count > 0) {
+        for (NSString *keyPath in [relationInfo.relationsDic allKeys]) {
+            NSArray *observerInfos = [relationInfo.relationsDic objectForKey:keyPath];
+            for (BARTKVOObserverInfo *observerInfo in observerInfos) {
+                if (observerInfo.observer) {
+                    [self BARTCB_removeObserver:observerInfo.observer forKeyPath:keyPath];
+                }
+            }
+        }
+        [relationInfo.relationsDic removeAllObjects];
+        [[BALogger sharedLogger] log:[NSString stringWithFormat:@"KVO crash, be observed object released, be observed object class = %@", [self class]]];
+    }
+    
+    BARTKVOOwnerInfo *ownerInfo = objc_getAssociatedObject(self, KEY_ASSOCIATED_OWNER_INFO);
+    if (ownerInfo.ownersDic && ownerInfo.ownersDic.count > 0) {
+        for (NSString *ownerAddress in [ownerInfo.ownersDic allKeys]) {
+            BARTKVOOwnerItem *item = [ownerInfo.ownersDic objectForKey:ownerAddress];
+            if (item.owner) {
+                [item.owner removeSpecificKVORelation:self];
+            }
+        }
+        [[BALogger sharedLogger] log:[NSString stringWithFormat:@"KVO crash, observer released, observer object class = %@", [self class]]];
+    }
+    
+    dispatch_semaphore_signal([self KVOCrashBlockerSemaphore]);
+}
+
+- (dispatch_semaphore_t)KVOCrashBlockerSemaphore
+{
+    static dispatch_semaphore_t KVOCrashBlockerSemaphore;
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        KVOCrashBlockerSemaphore = dispatch_semaphore_create(1);
+    });
+    return KVOCrashBlockerSemaphore;
 }
 
 @end
@@ -247,136 +616,7 @@
 - (void)replaceMethods
 {
     method_exchangeImplementations(class_getInstanceMethod([NSObject class], @selector(addObserver:forKeyPath:options:context:)), class_getInstanceMethod([NSObject class], @selector(BARTCB_addObserver:forKeyPath:options:context:)));
-    method_exchangeImplementations(class_getInstanceMethod([NSObject class], @selector(removeObserver:forKeyPath:context:)), class_getInstanceMethod([NSObject class], @selector(BARTCB_removeObserver:forKeyPath:context:)));
     method_exchangeImplementations(class_getInstanceMethod([NSObject class], @selector(removeObserver:forKeyPath:)), class_getInstanceMethod([NSObject class], @selector(BARTCB_removeObserver:forKeyPath:)));
-}
-
-@end
-
-@implementation BARTKVOProxyContainer
-@end
-
-@implementation BARTKVOProxy
-
-- (void)dealloc
-{
-    if (self.KVORelationsDic.count > 0 && [[BARTKVOCrashBlocker sharedBlocker] working]) {
-        [self.KVORelationsDic removeAllObjects];
-        [[BALogger sharedLogger] log:[NSString stringWithFormat:@"KVO crash, observered target released, observed target class = %@", self.targetClass]];
-    }
-}
-
-- (instancetype)init
-{
-    self = [super init];
-    if (self) {
-        _KVORelationsDic = [[NSMutableDictionary alloc] init];
-    }
-    return self;
-}
-
-#pragma mark - public method
-- (BOOL)isKVORelationRegistered:(id)observer keyPath:(NSString *)keyPath
-{
-    if (!observer || !keyPath || keyPath.length == 0) {
-        return NO;
-    }
-    NSMutableArray *observersArray = [self.KVORelationsDic objectForKey:keyPath];
-    if (observersArray) {
-        for (BARTKVOProxyContainer *container in observersArray) {
-            if (container.context == observer) {
-                return YES;
-            }
-        }
-        return NO;
-    } else {
-        return NO;
-    }
-}
-
-- (void)registerKVORelation:(id)observer keyPath:(NSString *)keyPath
-{
-    if (!observer || !keyPath || keyPath.length == 0) {
-        return;
-    }
-    NSMutableArray *observersArray = [self.KVORelationsDic objectForKey:keyPath];
-    if (observersArray) {
-        for (BARTKVOProxyContainer *container in observersArray) {
-            if (container.context == observer) {
-                return;
-            }
-        }
-    } else {
-        observersArray = [[NSMutableArray alloc] init];
-    }
-    BARTKVOProxyContainer *newContainer = [[BARTKVOProxyContainer alloc] init];
-    newContainer.context = observer;
-    newContainer.contextClass = NSStringFromClass([observer class]);
-    [observersArray addObject:newContainer];
-    [self.KVORelationsDic setObject:observersArray forKey:keyPath];
-}
-
-- (void)unregisterKVORelation:(id)observer keyPath:(NSString *)keyPath
-{
-    if (!observer || !keyPath || keyPath.length == 0) {
-        return;
-    }
-    NSMutableArray *observersArray = [self.KVORelationsDic objectForKey:keyPath];
-    if (observersArray) {
-        BARTKVOProxyContainer *containerNeedDelete = nil;
-        for (BARTKVOProxyContainer *container in observersArray) {
-            if (container.context == observer) {
-                containerNeedDelete = container;
-                break;
-            }
-        }
-        if (containerNeedDelete) {
-            [observersArray removeObject:containerNeedDelete];
-            if (observersArray.count > 0) {
-                [self.KVORelationsDic setObject:observersArray forKey:keyPath];
-            } else {
-                [self.KVORelationsDic removeObjectForKey:keyPath];
-            }
-        }
-    }
-}
-
-#pragma mark - KVO
-- (void)observeValueForKeyPath:(nullable NSString *)keyPath ofObject:(nullable id)object change:(nullable NSDictionary<NSKeyValueChangeKey, id> *)change context:(nullable void *)context
-{
-    if (object != self.target || ![[self.KVORelationsDic allKeys] containsObject:keyPath]) {
-        return;
-    }
-    if (!self.target) {
-        [[BALogger sharedLogger] log:[NSString stringWithFormat:@"KVO crash, observered target released, keyPath = %@, observed target class = %@", keyPath, self.targetClass]];
-        return;
-    }
-    NSMutableArray *observersArray = [self.KVORelationsDic objectForKey:keyPath];
-    if (observersArray) {
-        NSMutableArray *invalidContainer = nil;
-        for (BARTKVOProxyContainer *container in observersArray) {
-            if (container.context) {
-                if ([container.context respondsToSelector:@selector(observeValueForKeyPath:ofObject:change:context:)]) {
-                    [container.context observeValueForKeyPath:keyPath ofObject:object change:change context:context];
-                }
-            } else {
-                if (!invalidContainer) {
-                    invalidContainer = [[NSMutableArray alloc] init];
-                }
-                [invalidContainer addObject:container];
-                [[BALogger sharedLogger] log:[NSString stringWithFormat:@"KVO crash, observer released, observer class = %@, keyPath = %@, observed target class = %@", container.contextClass, keyPath, self.targetClass]];
-            }
-        }
-        if (invalidContainer && invalidContainer.count > 0) {
-            [observersArray removeObjectsInArray:invalidContainer];
-            if (observersArray.count > 0) {
-                [self.KVORelationsDic setObject:keyPath forKey:observersArray];
-            } else {
-                [self.KVORelationsDic removeObjectForKey:keyPath];
-            }
-        }
-        
-    }
 }
 
 @end

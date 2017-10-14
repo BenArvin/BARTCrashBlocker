@@ -3,7 +3,7 @@
 //  BARTCrashBlocker
 //
 //  Created by BenArvin on 2017/10/12.
-//  Copyright © 2017年 cn.ZAKER. All rights reserved.
+//  Copyright © 2017年 cn.BenArvin. All rights reserved.
 //
 
 typedef void(^BARTDeallocObserverBlock)(void);
@@ -15,12 +15,12 @@ typedef void(^BARTDeallocObserverBlock)(void);
 
 /**
  start observe dealloc function
-
- @param willDeallocBlock block called before self dealloc
+ 
+ @param willDeallocSelector selector called before self dealloc, must be non parameter function
  @param didDeallocBlock block called after self did dealloc
  */
-- (void)startDeallocObserving:(BARTDeallocObserverBlock)willDeallocBlock
-              didDeallocBlock:(BARTDeallocObserverBlock)didDeallocBlock;
+- (void)startDeallocObserving:(SEL)willDeallocSelector
+                   didDeallocBlock:(BARTDeallocObserverBlock)didDeallocBlock;
 
 /**
  stop observe dealloc function
@@ -28,3 +28,4 @@ typedef void(^BARTDeallocObserverBlock)(void);
 - (void)stopDeallocObserving;
 
 @end
+

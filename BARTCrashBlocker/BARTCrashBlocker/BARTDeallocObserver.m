@@ -3,7 +3,7 @@
 //  BARTCrashBlocker
 //
 //  Created by BenArvin on 2017/10/12.
-//  Copyright © 2017年 cn.ZAKER. All rights reserved.
+//  Copyright © 2017年 cn.BenArvin. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
@@ -21,7 +21,7 @@
 
 @property (nonatomic, copy) NSString *ownerAddress;
 @property (nonatomic, copy) NSString *ownerClass;
-@property (nonatomic, copy) BARTDeallocObserverBlock willDeallocBlock;
+@property (nonatomic) SEL willDeallocSelector;
 @property (nonatomic, copy) BARTDeallocObserverBlock didDeallocBlock;
 
 @end
@@ -68,8 +68,11 @@
     if (observeInfo) {
         observeInfo.needFeedback = NO;
         [[BALogger sharedLogger] log:[NSString stringWithFormat:@"(%@ *)%@ will dealloc", observeInfo.ownerClass, observeInfo.ownerAddress]];
-        if (observeInfo.willDeallocBlock) {
-            observeInfo.willDeallocBlock();
+        if (observeInfo.willDeallocSelector && [self respondsToSelector:observeInfo.willDeallocSelector]) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Warc-performSelector-leaks"
+            [self performSelector:observeInfo.willDeallocSelector];
+#pragma clang diagnostic pop
         }
     }
     [self BARTCB_dealloc];
@@ -82,13 +85,13 @@
     }
 }
 
-- (void)startDeallocObserving:(BARTDeallocObserverBlock)willDeallocBlock didDeallocBlock:(BARTDeallocObserverBlock)didDeallocBlock
+- (void)startDeallocObserving:(SEL)willDeallocSelector didDeallocBlock:(BARTDeallocObserverBlock)didDeallocBlock
 {
     if (![NSObject getAssociatedAttribute:KEY_ASSOCIATED_DEALLOC_OBSERVE_INFO from:self]) {
         BARTDeallocObserveInfo *observeInfo = [[BARTDeallocObserveInfo alloc] init];
         observeInfo.ownerAddress = [NSString stringWithFormat:@"%p", self];
         observeInfo.ownerClass = NSStringFromClass([self class]);
-        observeInfo.willDeallocBlock = willDeallocBlock;
+        observeInfo.willDeallocSelector = willDeallocSelector;
         observeInfo.didDeallocBlock = didDeallocBlock;
         [NSObject setAssociatedAttribute:observeInfo withKey:KEY_ASSOCIATED_DEALLOC_OBSERVE_INFO policy:OBJC_ASSOCIATION_RETAIN_NONATOMIC to:self];
         [[BARTDeallocObserver sharedObserver] addObservingCount];
@@ -187,3 +190,4 @@
 }
 
 @end
+

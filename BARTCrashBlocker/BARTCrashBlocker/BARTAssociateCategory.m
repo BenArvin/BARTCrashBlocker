@@ -3,7 +3,7 @@
 //  BARTCrashBlocker
 //
 //  Created by BenArvin on 2017/10/12.
-//  Copyright © 2017年 cn.ZAKER. All rights reserved.
+//  Copyright © 2017年 cn.BenArvin. All rights reserved.
 //
 
 #import <Foundation/Foundation.h>
