@@ -97,10 +97,13 @@
 //    testModel.style = @"yyyyyy";
 //    NSLog(@"---end");
 //
-//    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(selectorAction) name:@"hhhhh" object:nil];
-//    [[NSNotificationCenter defaultCenter] removeObserver:self];
-    BATestSubClassModel *model = [[BATestSubClassModel alloc] init];
-    [model performSelector:@selector(hhhhhh)];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(selectorAction) name:@"hhhhh" object:nil];
+    [[NSNotificationCenter defaultCenter] removeObserver:self];
+    [[NSNotificationCenter defaultCenter] removeObserver:self name:@"hhhhh" object:nil];
+//    BATestSubClassModel *model = [[BATestSubClassModel alloc] init];
+//    id result = [model performSelector:@selector(hhhhhh:test:)];
+    
+    NSLog(@"");
 }
 
 - (void)selectorAction
