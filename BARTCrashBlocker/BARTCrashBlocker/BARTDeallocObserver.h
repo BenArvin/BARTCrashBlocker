@@ -19,13 +19,13 @@ typedef void(^BARTDeallocObserverBlock)(void);
  @param willDeallocSelector selector called before self dealloc, must be non parameter
  @param didDeallocBlock block called after self did dealloc
  */
-- (void)startDeallocObserving:(SEL)willDeallocSelector
+- (void)ba_startDeallocObserving:(SEL)willDeallocSelector
                    didDeallocBlock:(BARTDeallocObserverBlock)didDeallocBlock;
 
 /**
  stop observe dealloc function
  */
-- (void)stopDeallocObserving;
+- (void)ba_stopDeallocObserving;
 
 @end
 

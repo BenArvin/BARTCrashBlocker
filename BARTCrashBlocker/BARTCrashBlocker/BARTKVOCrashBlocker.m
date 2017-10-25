@@ -14,8 +14,8 @@
 #import "BARTDeallocObserver.h"
 #import "BALogger.h"
 
-#define KEY_ASSOCIATED_RELATIONSHIP_INFO "BARTObjectAssociatedRelationshipInfo"
-#define KEY_ASSOCIATED_OWNER_INFO        "BARTObjectAssociatedOwnerInfo"
+static char ba_keyAssociatedRelationshipInfo;
+static char ba_keyAssociatedOwnerInfo;
 
 @interface BARTKVOOwnerItem : NSObject
 
@@ -360,26 +360,26 @@
 #pragma mark owner info method
 - (BARTKVOOwnerInfo *)getKVOOwnerInfo
 {
-    return [NSObject getAssociatedAttribute:KEY_ASSOCIATED_OWNER_INFO from:self];
+    return [NSObject ba_getAssociatedAttribute:&ba_keyAssociatedOwnerInfo from:self];
 }
 
 - (void)setKVOOwnerInfo:(BARTKVOOwnerInfo *)info
 {
     if (info) {
-        [NSObject setAssociatedAttribute:info withKey:KEY_ASSOCIATED_OWNER_INFO policy:OBJC_ASSOCIATION_RETAIN_NONATOMIC to:self];
+        [NSObject ba_setAssociatedAttribute:info withKey:&ba_keyAssociatedOwnerInfo policy:OBJC_ASSOCIATION_RETAIN_NONATOMIC to:self];
     }
 }
 
 #pragma mark relation info method
 - (BARTKVORelationInfo *)getRelationInfo
 {
-    return [NSObject getAssociatedAttribute:KEY_ASSOCIATED_RELATIONSHIP_INFO from:self];
+    return [NSObject ba_getAssociatedAttribute:&ba_keyAssociatedRelationshipInfo from:self];
 }
 
 - (void)setRelationInfo:(BARTKVORelationInfo *)info
 {
     if (info) {
-        [NSObject setAssociatedAttribute:info withKey:KEY_ASSOCIATED_RELATIONSHIP_INFO policy:OBJC_ASSOCIATION_RETAIN_NONATOMIC to:self];
+        [NSObject ba_setAssociatedAttribute:info withKey:&ba_keyAssociatedRelationshipInfo policy:OBJC_ASSOCIATION_RETAIN_NONATOMIC to:self];
     }
 }
 
@@ -408,8 +408,8 @@
         [ownerInfo registerOwner:self];
         
         //start dealloc observer
-        [self startDeallocObserving:@selector(selfWillDeallocAction) didDeallocBlock:nil];
-        [observer startDeallocObserving:@selector(selfWillDeallocAction) didDeallocBlock:nil];
+        [self ba_startDeallocObserving:@selector(selfWillDeallocAction) didDeallocBlock:nil];
+        [observer ba_startDeallocObserving:@selector(selfWillDeallocAction) didDeallocBlock:nil];
         
         //real start KVO action
         [self BARTCB_addObserver:observer forKeyPath:keyPath options:options context:context];
@@ -431,7 +431,7 @@
     if (relationInfo) {
         KVORelationRegistered = [relationInfo isRelationRegistered:observer keyPath:keyPath context:context];
     } else {
-        [self stopDeallocObserving];
+        [self ba_stopDeallocObserving];
     }
     if (KVORelationRegistered) {
         //unregister KVO relation
@@ -442,15 +442,15 @@
         if (ownerInfo) {
             [ownerInfo unregisterOwner:self];
             if (ownerInfo.ownersDic.count == 0) {
-                [observer stopDeallocObserving];
+                [observer ba_stopDeallocObserving];
             }
         } else {
-            [observer stopDeallocObserving];
+            [observer ba_stopDeallocObserving];
         }
         
         //stop dealloc observing if need
         if (relationInfo.relationsDic.count == 0) {
-            [self stopDeallocObserving];
+            [self ba_stopDeallocObserving];
         }
         
         //real start KVO action
@@ -473,7 +473,7 @@
     if (relationInfo) {
         KVORelationRegistered = [relationInfo isRelationRegistered:observer keyPath:keyPath];
     } else {
-        [self stopDeallocObserving];
+        [self ba_stopDeallocObserving];
     }
     if (KVORelationRegistered) {
         //unregister KVO relation
@@ -484,15 +484,15 @@
         if (ownerInfo) {
             [ownerInfo unregisterOwner:self];
             if (ownerInfo.ownersDic.count == 0) {
-                [observer stopDeallocObserving];
+                [observer ba_stopDeallocObserving];
             }
         } else {
-            [observer stopDeallocObserving];
+            [observer ba_stopDeallocObserving];
         }
         
         //stop dealloc observing if need
         if (relationInfo.relationsDic.count == 0) {
-            [self stopDeallocObserving];
+            [self ba_stopDeallocObserving];
         }
         
         //real start KVO action
@@ -511,7 +511,7 @@
 {
     dispatch_semaphore_wait([self KVOCrashBlockerSemaphore], DISPATCH_TIME_FOREVER);
     
-    BARTKVORelationInfo *relationInfo = objc_getAssociatedObject(self, KEY_ASSOCIATED_RELATIONSHIP_INFO);
+    BARTKVORelationInfo *relationInfo = objc_getAssociatedObject(self, &ba_keyAssociatedRelationshipInfo);
     if (relationInfo.relationsDic && relationInfo.relationsDic.count > 0) {
         for (NSString *keyPath in [relationInfo.relationsDic allKeys]) {
             NSArray *observerInfos = [relationInfo.relationsDic objectForKey:keyPath];
@@ -525,7 +525,7 @@
         [[BALogger sharedLogger] log:[NSString stringWithFormat:@"KVO crash, be observed object released, be observed object class = %@", [self class]]];
     }
     
-    BARTKVOOwnerInfo *ownerInfo = objc_getAssociatedObject(self, KEY_ASSOCIATED_OWNER_INFO);
+    BARTKVOOwnerInfo *ownerInfo = objc_getAssociatedObject(self, &ba_keyAssociatedOwnerInfo);
     if (ownerInfo.ownersDic && ownerInfo.ownersDic.count > 0) {
         for (NSString *ownerAddress in [ownerInfo.ownersDic allKeys]) {
             BARTKVOOwnerItem *item = [ownerInfo.ownersDic objectForKey:ownerAddress];

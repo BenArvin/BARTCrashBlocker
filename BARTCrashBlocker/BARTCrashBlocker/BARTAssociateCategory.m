@@ -11,17 +11,17 @@
 
 @implementation NSObject(BARTAssociateCategory)
 
-+ (void)setAssociatedAttribute:(id)value withKey:(void *)key policy:(objc_AssociationPolicy)policy to:(id)object
++ (void)ba_setAssociatedAttribute:(id)value withKey:(const void *)key policy:(objc_AssociationPolicy)policy to:(id)object
 {
     objc_setAssociatedObject(object, key, value, policy);
 }
 
-+ (id)getAssociatedAttribute:(void *)key from:(id)object
++ (id)ba_getAssociatedAttribute:(const void *)key from:(id)object
 {
     return objc_getAssociatedObject(object, key);
 }
 
-+ (void)removeAssociatedAttribute:(void *)key from:(id)object
++ (void)ba_removeAssociatedAttribute:(const void *)key from:(id)object
 {
     objc_setAssociatedObject(object, key, nil, OBJC_ASSOCIATION_ASSIGN);
 }

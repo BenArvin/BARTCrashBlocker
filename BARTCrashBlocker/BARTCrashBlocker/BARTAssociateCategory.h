@@ -10,8 +10,8 @@
 
 @interface NSObject(BARTAssociateCategory)
 
-+ (void)setAssociatedAttribute:(id)value withKey:(void *)key policy:(objc_AssociationPolicy)policy to:(id)object;
-+ (id)getAssociatedAttribute:(void *)key from:(id)object;
-+ (void)removeAssociatedAttribute:(void *)key from:(id)object;
++ (void)ba_setAssociatedAttribute:(id)value withKey:(const void *)key policy:(objc_AssociationPolicy)policy to:(id)object;
++ (id)ba_getAssociatedAttribute:(const void *)key from:(id)object;
++ (void)ba_removeAssociatedAttribute:(const void *)key from:(id)object;
 
 @end

@@ -12,7 +12,7 @@
 #import <pthread.h>
 #import "BARTAssociateCategory.h"
 
-#define KEY_ASSOCIATED_DEALLOC_OBSERVE_INFO  "BARTObjectAssociatedDeallocObserveInfo"
+static char ba_keyAssociatedDeallocObserveInfo;
 
 @interface BARTDeallocObserveInfo : NSObject
 
@@ -63,7 +63,7 @@
 #pragma mark - exchanged method
 - (void)BARTCB_dealloc
 {
-    BARTDeallocObserveInfo *observeInfo = objc_getAssociatedObject(self, KEY_ASSOCIATED_DEALLOC_OBSERVE_INFO);
+    BARTDeallocObserveInfo *observeInfo = objc_getAssociatedObject(self, &ba_keyAssociatedDeallocObserveInfo);
     if (observeInfo) {
         observeInfo.needFeedback = NO;
         if (observeInfo.willDeallocSelector && [self respondsToSelector:observeInfo.willDeallocSelector]) {
@@ -82,25 +82,25 @@
     }
 }
 
-- (void)startDeallocObserving:(SEL)willDeallocSelector didDeallocBlock:(BARTDeallocObserverBlock)didDeallocBlock
+- (void)ba_startDeallocObserving:(SEL)willDeallocSelector didDeallocBlock:(BARTDeallocObserverBlock)didDeallocBlock
 {
-    if (![NSObject getAssociatedAttribute:KEY_ASSOCIATED_DEALLOC_OBSERVE_INFO from:self]) {
+    if (![NSObject ba_getAssociatedAttribute:&ba_keyAssociatedDeallocObserveInfo from:self]) {
         BARTDeallocObserveInfo *observeInfo = [[BARTDeallocObserveInfo alloc] init];
         observeInfo.ownerAddress = [NSString stringWithFormat:@"%p", self];
         observeInfo.ownerClass = NSStringFromClass([self class]);
         observeInfo.willDeallocSelector = willDeallocSelector;
         observeInfo.didDeallocBlock = didDeallocBlock;
-        [NSObject setAssociatedAttribute:observeInfo withKey:KEY_ASSOCIATED_DEALLOC_OBSERVE_INFO policy:OBJC_ASSOCIATION_RETAIN_NONATOMIC to:self];
+        [NSObject ba_setAssociatedAttribute:observeInfo withKey:&ba_keyAssociatedDeallocObserveInfo policy:OBJC_ASSOCIATION_RETAIN_NONATOMIC to:self];
         [[BARTDeallocObserver sharedObserver] addObservingCount];
     }
 }
 
-- (void)stopDeallocObserving
+- (void)ba_stopDeallocObserving
 {
-    BARTDeallocObserveInfo *observeInfo = [NSObject getAssociatedAttribute:KEY_ASSOCIATED_DEALLOC_OBSERVE_INFO from:self];
+    BARTDeallocObserveInfo *observeInfo = [NSObject ba_getAssociatedAttribute:&ba_keyAssociatedDeallocObserveInfo from:self];
     if (observeInfo) {
         observeInfo.needFeedback = NO;
-        [NSObject removeAssociatedAttribute:KEY_ASSOCIATED_DEALLOC_OBSERVE_INFO from:self];
+        [NSObject ba_removeAssociatedAttribute:&ba_keyAssociatedDeallocObserveInfo from:self];
         [[BARTDeallocObserver sharedObserver] reduceObservingCount];
     }
 }
